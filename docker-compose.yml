@@ -71,6 +71,27 @@ services:
         -XX:+UseContainerSupport
         -Dspring.profiles.active=instance2
 
+  # ── Fake bank — port 9090 ────────────────────────────────────────────────────
+  # Simulates all real-bank behaviours: latency, rejections, 60s hang, callbacks,
+  # duplicates, retries. All rates are configurable via environment variables.
+  fake-bank:
+    build:
+      context: ./fake-bank
+      dockerfile: Dockerfile
+    container_name: fake-bank
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    environment:
+      # Callback targets — both wallet-service instances receive callback traffic
+      BANK_CALLBACK_URLS: >-
+        http://wallet-app-1:8081/mpesa/v1/callbacks/bank,
+        http://wallet-app-2:8082/mpesa/v1/callbacks/bank
+      JAVA_OPTS: -XX:MaxRAMPercentage=75 -XX:+UseContainerSupport
+    # Override any rate for a specific test scenario:
+    # BANK_ACCEPT_RATE: "0.0"          # force 100% no-response
+    # BANK_DUPLICATE_CALLBACK_RATE: "1.0"  # force all callbacks duplicated
+
 volumes:
   postgres_data:
     driver: local
