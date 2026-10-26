@@ -73,6 +73,16 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Same batch_id resubmitted with different rows → 409 Conflict.
+     */
+    @ExceptionHandler(DisbursementConflictException.class)
+    public ResponseEntity<ProblemDetail> handleDisbursementConflict(DisbursementConflictException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        problem.setTitle("Batch Conflict");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(problem);
+    }
+
+    /**
      * Pessimistic lock timed out (another transaction held the row lock longer
      * than {@code jakarta.persistence.lock.timeout}).  The caller should retry.
      * Returns 503 Service Unavailable with a Retry-After hint.

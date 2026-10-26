@@ -1,17 +1,27 @@
 package com.mpesa.walletservice.exception;
 
-
+/**
+ * Machine-readable error codes for 422 Unprocessable Entity responses
+ * and per-row disbursement failures.
+ */
 public enum WalletErrorCode {
 
+    /** A debit was attempted on a wallet whose status is not ACTIVE. */
     WALLET_NOT_ACTIVE,
 
-    /**
-     * The requested debit would make available (balance − reserved) negative.
-     */
+    /** No wallet exists with the given identifier. */
+    WALLET_NOT_FOUND,
+
+    /** The debit would make available (balance − reserved) negative. */
     INSUFFICIENT_FUNDS,
 
-    /**
-     * The requested reservation would make available negative.
-     */
+    /** A reservation would make available negative. */
     INSUFFICIENT_AVAILABLE_BALANCE,
+
+    /**
+     * A row_id appears more than once in the same batch request.
+     * The first occurrence is processed; subsequent ones are recorded as
+     * FAILED with this code and are never attempted.
+     */
+    DUPLICATE_ROW,
 }
