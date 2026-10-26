@@ -1,0 +1,76 @@
+services:
+
+  # ── PostgreSQL (single shared instance) ─────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: wallet-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: wallet_db
+      POSTGRES_USER: wallet_user
+      POSTGRES_PASSWORD: wallet_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wallet_user -d wallet_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── App instance 1 — port 8081 ───────────────────────────────────────────────
+  wallet-app-1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wallet-app-1
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: instance1
+      # DB connection — points at the shared postgres service
+      DB_URL: jdbc:postgresql://postgres:5432/wallet_db
+      DB_USER: wallet_user
+      DB_PASS: wallet_pass
+      # Identity — surfaced in logs and /actuator/info so you can tell
+      # which instance handled a request
+      INSTANCE_ID: instance-1
+      INSTANCE_PORT: "8081"
+      # JVM tuning for containers
+      JAVA_OPTS: >-
+        -XX:MaxRAMPercentage=75
+        -XX:+UseContainerSupport
+        -Dspring.profiles.active=instance1
+
+  # ── App instance 2 — port 8082 ───────────────────────────────────────────────
+  wallet-app-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: wallet-app-2
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: instance2
+      DB_URL: jdbc:postgresql://postgres:5432/wallet_db
+      DB_USER: wallet_user
+      DB_PASS: wallet_pass
+      INSTANCE_ID: instance-2
+      INSTANCE_PORT: "8082"
+      JAVA_OPTS: >-
+        -XX:MaxRAMPercentage=75
+        -XX:+UseContainerSupport
+        -Dspring.profiles.active=instance2
+
+volumes:
+  postgres_data:
+    driver: local
