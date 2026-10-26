@@ -12,6 +12,12 @@ public enum WalletErrorCode {
     /** No wallet exists with the given identifier. */
     WALLET_NOT_FOUND,
 
+    /**
+     * from_wallet and to_wallet resolve to the same wallet.
+     * A transfer to yourself is not permitted.
+     */
+    SAME_WALLET,
+
     /** The debit would make available (balance − reserved) negative. */
     INSUFFICIENT_FUNDS,
 
