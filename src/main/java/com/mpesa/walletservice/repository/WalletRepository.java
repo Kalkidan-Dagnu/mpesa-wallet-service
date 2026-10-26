@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface WalletRepository extends JpaRepository<Wallet, Long> {
 
     Optional<Wallet> findByPhoneNumber(String phoneNumber);
+
+
 }
